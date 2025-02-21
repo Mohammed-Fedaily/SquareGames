@@ -1,0 +1,15 @@
+Game (Interface)
+├── getId(): UUID           // Unique game identifier
+├── getBoard(): Map        // Current board state
+├── getStatus(): Status    // Game status (ONGOING, etc)
+├── getCurrentPlayerId()   // Current player's turn
+├── getRemainingTokens()   // Available tokens
+└── getRemovedTokens()     // Captured/used tokens
+
+Token (Interface)
+├── getPosition()         // Current position
+├── getAllowedMoves()     // Possible moves
+└── moveTo(position)      // Make a move
+
+GameFactory (Interface)
+└── createGame(players, size) // Creates new game instance
