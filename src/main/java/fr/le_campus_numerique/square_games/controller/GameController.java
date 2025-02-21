@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,16 +31,21 @@ public class GameController {
                 .collect(Collectors.toList());
     }
 
-    @PostMapping("/{gameId}")
+    @PostMapping
     public GameDtoRes createGame(
-            @PathVariable String gameId,
             @RequestBody GameDtoReq gameDtoReq) {
         Game game = gameService.createGame(
-                gameId,
+                gameDtoReq.getGameType(),
                 gameDtoReq.getNumberOfPlayers(),
                 gameDtoReq.getBoardSize()
         );
         return convertToGameDtoRes(game);
+    }
+
+    @GetMapping("/name")
+    public String getGameName(@RequestHeader(name = "Accept-Language", defaultValue = "en") String languageHeader) {
+        Locale locale = Locale.forLanguageTag(languageHeader);
+        return gameService.getGameName(locale);
     }
 
     @GetMapping("/{gameId}")
@@ -68,6 +74,7 @@ public class GameController {
     public List<String> getGameHistory(@PathVariable UUID gameId) {
         return gameService.getGameHistory(gameId);
     }
+
     private GameDtoRes convertToGameDtoRes(Game game) {
         GameDtoRes dto = new GameDtoRes();
         dto.setGameId(game.getId());

@@ -5,6 +5,7 @@ import fr.le_campus_numerique.square_games.engine.CellPosition;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public interface GameService {
@@ -14,5 +15,6 @@ public interface GameService {
     Collection<Game> getAllGames();
     Collection<CellPosition> getAvailableMoves(UUID gameId, UUID playerId);
     List<String> getGameHistory(UUID gameId);
+    String getGameName(Locale locale);
 
 }

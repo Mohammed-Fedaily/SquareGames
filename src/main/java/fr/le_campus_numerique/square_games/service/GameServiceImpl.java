@@ -1,7 +1,8 @@
 package fr.le_campus_numerique.square_games.service;
 
 import fr.le_campus_numerique.square_games.engine.*;
-import fr.le_campus_numerique.square_games.engine.tictactoe.TicTacToeGameFactory;
+import fr.le_campus_numerique.square_games.plugin.GamePlugin;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -12,11 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class GameServiceImpl implements GameService {
     private final Map<UUID, Game> games = new ConcurrentHashMap<>();
-    private final TicTacToeGameFactory gameFactory;
     private final Map<UUID, List<String>> gameHistories = new ConcurrentHashMap<>();
+    private final GamePlugin gamePlugin;
 
-    public GameServiceImpl() {
-        this.gameFactory = new TicTacToeGameFactory();
+    @Autowired
+    public GameServiceImpl(GamePlugin gamePlugin) {
+        this.gamePlugin = gamePlugin;
+    }
+
+    @Override
+    public String getGameName(Locale locale) {
+        return gamePlugin.getName(locale);
     }
 
     @Override
@@ -26,23 +33,10 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Game createGame(String gameId, int numberOfPlayers, int boardSize) {
-        if (!gameFactory.getGameFactoryId().equals(gameId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid game type");
-        }
-
-        IntRange playerCountRange = gameFactory.getPlayerCountRange();
-        if (numberOfPlayers < playerCountRange.min() || numberOfPlayers > playerCountRange.max()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Player count must be between " + playerCountRange.min() + " and " + playerCountRange.max());
-        }
-
-        IntRange boardSizeRange = gameFactory.getBoardSizeRange(numberOfPlayers);
-        if (boardSize < boardSizeRange.min() || boardSize > boardSizeRange.max()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Board size must be between " + boardSizeRange.min() + " and " + boardSizeRange.max());
-        }
-
-        Game game = gameFactory.createGame(numberOfPlayers, boardSize);
+        Game game = gamePlugin.createGame(
+                Optional.of(numberOfPlayers),
+                Optional.of(boardSize)
+        );
         games.put(game.getId(), game);
         return game;
     }
@@ -75,7 +69,6 @@ public class GameServiceImpl implements GameService {
         }
         return gameHistories.get(gameId);
     }
-
 
     private void recordMove(UUID gameId, UUID playerId, CellPosition position) {
         String moveRecord = String.format("Player %s moved to position (%d,%d)",
@@ -111,4 +104,6 @@ public class GameServiceImpl implements GameService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid move: " + e.getMessage());
         }
     }
+
+
 }

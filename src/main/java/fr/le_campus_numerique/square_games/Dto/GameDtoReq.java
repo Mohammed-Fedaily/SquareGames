@@ -1,8 +1,17 @@
 package fr.le_campus_numerique.square_games.Dto;
 
 public class GameDtoReq {
+    private String gameType;
     private int numberOfPlayers;
     private int boardSize;
+
+    public String getGameType() {
+        return gameType;
+    }
+
+    public void setGameType(String gameType) {
+        this.gameType = gameType;
+    }
 
     public int getNumberOfPlayers() {
         return numberOfPlayers;
@@ -20,4 +29,3 @@ public class GameDtoReq {
         this.boardSize = boardSize;
     }
 }
-
