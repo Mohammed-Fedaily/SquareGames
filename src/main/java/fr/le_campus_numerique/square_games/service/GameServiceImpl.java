@@ -1,44 +1,55 @@
-package fr.le_campus_numerique.square_games.service;
+package fr.le_campus_numerique.square_games.Service;
 
-import fr.le_campus_numerique.square_games.engine.*;
-import fr.le_campus_numerique.square_games.plugin.GamePlugin;
+import fr.le_campus_numerique.square_games.Dao.GameDao;
+import fr.le_campus_numerique.square_games.Plugin.GamePlugin;
+import fr.le_campus_numerique.square_games.engine.CellPosition;
+import fr.le_campus_numerique.square_games.engine.Game;
+import fr.le_campus_numerique.square_games.engine.InvalidPositionException;
+import fr.le_campus_numerique.square_games.engine.Token;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class GameServiceImpl implements GameService {
-    private final Map<UUID, Game> games = new ConcurrentHashMap<>();
-    private final Map<UUID, List<String>> gameHistories = new ConcurrentHashMap<>();
+    private final GameDao gameDao;
     private final GamePlugin gamePlugin;
+    private final Map<UUID, List<String>> gameHistories = new HashMap<>();
 
     @Autowired
-    public GameServiceImpl(GamePlugin gamePlugin) {
+    public GameServiceImpl(@Qualifier("jdbcGameDao") GameDao gameDao, GamePlugin gamePlugin) {
+        this.gameDao = gameDao;
         this.gamePlugin = gamePlugin;
     }
 
     @Override
-    public String getGameName(Locale locale) {
-        return gamePlugin.getName(locale);
-    }
-
-    @Override
     public Collection<Game> getAllGames() {
-        return games.values();
+        return gameDao.findAll().collect(Collectors.toList());
     }
 
     @Override
-    public Game createGame(String gameId, int numberOfPlayers, int boardSize) {
+    public Game createGame(String gameType, int numberOfPlayers, int boardSize) {
         Game game = gamePlugin.createGame(
                 Optional.of(numberOfPlayers),
                 Optional.of(boardSize)
         );
-        games.put(game.getId(), game);
+
+        gameDao.upsert(game);
+
+        gameHistories.put(game.getId(), new ArrayList<>());
+
         return game;
+    }
+
+    @Override
+    public Game getGame(UUID gameId) {
+        return gameDao.findById(gameId.toString())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No Game find"));
     }
 
     @Override
@@ -54,18 +65,9 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Game getGame(UUID gameId) {
-        Game game = games.get(gameId);
-        if (game == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found");
-        }
-        return game;
-    }
-
-    @Override
     public List<String> getGameHistory(UUID gameId) {
         if (!gameHistories.containsKey(gameId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Game history not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "You Have No History Here N****");
         }
         return gameHistories.get(gameId);
     }
@@ -81,12 +83,13 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public Game playMove(UUID gameId, UUID playerId, CellPosition position) {
+    public Game playMove(UUID gameId, UUID playerId, CellPosition position) throws InvalidPositionException {
         Game game = getGame(gameId);
 
         if (!playerId.equals(game.getCurrentPlayerId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Not your turn");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Not your turn DumbAss");
         }
+
 
         Token tokenToPlay = game.getRemainingTokens().stream()
                 .filter(token -> token.getOwnerId().isPresent() &&
@@ -94,16 +97,18 @@ public class GameServiceImpl implements GameService {
                         token.getAllowedMoves().contains(position))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "No valid token available for this move"));
+                        "U Can't Use This Token !! From Where You Got It!??"));
 
-        try {
             tokenToPlay.moveTo(position);
             recordMove(gameId, playerId, position);
+
+            gameDao.upsert(game);
+
             return game;
-        } catch (InvalidPositionException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid move: " + e.getMessage());
-        }
     }
 
-
+    @Override
+    public String getGameName(Locale locale) {
+        return gamePlugin.getName(locale);
+    }
 }
