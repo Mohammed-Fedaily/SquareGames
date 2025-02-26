@@ -7,7 +7,9 @@ import fr.le_campus_numerique.square_games.engine.Game;
 import fr.le_campus_numerique.square_games.Service.GameService;
 import fr.le_campus_numerique.square_games.engine.InvalidPositionException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collection;
 import java.util.List;
@@ -67,7 +69,15 @@ public class GameController {
     @GetMapping("/{gameId}/available-moves")
     public Collection<CellPosition> getAvailableMoves(
             @PathVariable UUID gameId,
-            @RequestHeader("X-UserId") UUID playerId) {
+            @RequestHeader("X-UserId") UUID playerId
+    ) {
+        Game game = gameService.getGame(gameId);
+        if (!playerId.equals(game.getCurrentPlayerId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Yoo what's u doing?? - is it ur turn??"
+            );
+        }
         return gameService.getAvailableMoves(gameId, playerId);
     }
 

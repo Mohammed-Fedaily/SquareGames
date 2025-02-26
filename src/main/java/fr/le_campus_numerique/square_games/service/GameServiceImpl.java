@@ -1,11 +1,14 @@
 package fr.le_campus_numerique.square_games.Service;
 
 import fr.le_campus_numerique.square_games.Dao.GameDao;
+import fr.le_campus_numerique.square_games.Dao.JpaGameDao;
 import fr.le_campus_numerique.square_games.Plugin.GamePlugin;
 import fr.le_campus_numerique.square_games.engine.CellPosition;
 import fr.le_campus_numerique.square_games.engine.Game;
 import fr.le_campus_numerique.square_games.engine.InvalidPositionException;
 import fr.le_campus_numerique.square_games.engine.Token;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -20,9 +23,11 @@ public class GameServiceImpl implements GameService {
     private final GameDao gameDao;
     private final GamePlugin gamePlugin;
     private final Map<UUID, List<String>> gameHistories = new HashMap<>();
+    private static final Logger logger = LoggerFactory.getLogger(GameServiceImpl.class);
+
 
     @Autowired
-    public GameServiceImpl(@Qualifier("jdbcGameDao") GameDao gameDao, GamePlugin gamePlugin) {
+    public GameServiceImpl(@Qualifier("jpaGameDao") GameDao gameDao, GamePlugin gamePlugin) {
         this.gameDao = gameDao;
         this.gamePlugin = gamePlugin;
     }
@@ -54,14 +59,45 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Collection<CellPosition> getAvailableMoves(UUID gameId, UUID playerId) {
+        logger.debug("Getting available moves for game: {}, player: {}", gameId, playerId);
+
         Game game = getGame(gameId);
 
-        return game.getRemainingTokens().stream()
-                .filter(token -> token.getOwnerId().isPresent() &&
-                        token.getOwnerId().get().equals(playerId))
+        logger.debug("Current player: {}", game.getCurrentPlayerId());
+        logger.debug("Remaining tokens : {}", game.getRemainingTokens().size());
+
+        game.getRemainingTokens().forEach(token -> {
+            logger.debug("Token: {}, Owner: {}, Allowed moves: {}",
+                    token.getName(),
+                    token.getOwnerId().orElse(null),
+                    token.getAllowedMoves().size());
+
+
+        });
+
+        if (!playerId.equals(game.getCurrentPlayerId())) {
+            logger.debug("Not player's turn. Current player is: {}", game.getCurrentPlayerId());
+            return Collections.emptySet();
+        }
+
+        Collection<CellPosition> availableMoves = game.getRemainingTokens().stream()
+                .filter(token -> {
+                    boolean hasOwner = token.getOwnerId().isPresent();
+                    boolean isOwner = hasOwner && token.getOwnerId().get().equals(playerId);
+                    logger.debug("Token: {}, hasOwner: {}, isOwner: {}",
+                            token.getName(), hasOwner, isOwner);
+                    return isOwner;
+                })
                 .findFirst()
-                .map(Token::getAllowedMoves)
+                .map(token -> {
+                    logger.debug("Found token for player, allowed moves: {}",
+                            token.getAllowedMoves().size());
+                    return token.getAllowedMoves();
+                })
                 .orElse(Collections.emptySet());
+
+        logger.debug("Final available moves count: {}", availableMoves.size());
+        return availableMoves;
     }
 
     @Override
