@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.plugin;
+package fr.le_campus_numerique.square_games.Plugin;
 
 import fr.le_campus_numerique.square_games.engine.Game;
 import fr.le_campus_numerique.square_games.engine.tictactoe.TicTacToeGameFactory;
