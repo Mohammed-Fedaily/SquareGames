@@ -1,8 +1,7 @@
-package fr.le_campus_numerique.square_games.Service;
+package fr.le_campus_numerique.square_games.service;
 
-import fr.le_campus_numerique.square_games.Dao.GameDao;
-import fr.le_campus_numerique.square_games.Dao.JpaGameDao;
-import fr.le_campus_numerique.square_games.Plugin.GamePlugin;
+import fr.le_campus_numerique.square_games.dao.GameDao;
+import fr.le_campus_numerique.square_games.plugin.GamePlugin;
 import fr.le_campus_numerique.square_games.engine.CellPosition;
 import fr.le_campus_numerique.square_games.engine.Game;
 import fr.le_campus_numerique.square_games.engine.InvalidPositionException;
@@ -21,15 +20,23 @@ import java.util.stream.Collectors;
 @Service
 public class GameServiceImpl implements GameService {
     private final GameDao gameDao;
-    private final GamePlugin gamePlugin;
+    private final Map<String, GamePlugin> gamePlugins;
     private final Map<UUID, List<String>> gameHistories = new HashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(GameServiceImpl.class);
 
 
     @Autowired
-    public GameServiceImpl(@Qualifier("jpaGameDao") GameDao gameDao, GamePlugin gamePlugin) {
+    public GameServiceImpl(@Qualifier("jpaGameDao") GameDao gameDao, List<GamePlugin> plugins) {
         this.gameDao = gameDao;
-        this.gamePlugin = gamePlugin;
+        this.gamePlugins = plugins.stream()
+                .collect(Collectors.toMap(
+                        plugin -> {
+                            Game sampleGame = plugin.createGame(Optional.empty(), Optional.empty());
+                            return sampleGame.getFactoryId();
+                        },
+                        plugin -> plugin
+                ));
+
     }
 
     @Override
@@ -39,16 +46,21 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Game createGame(String gameType, int numberOfPlayers, int boardSize) {
-        Game game = gamePlugin.createGame(
+        GamePlugin plugin = gamePlugins.get(gameType);
+        if (plugin == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Unknown game type: " + gameType);
+        }
+
+        Game game = plugin.createGame(
                 Optional.of(numberOfPlayers),
                 Optional.of(boardSize)
         );
 
         gameDao.upsert(game);
-
         gameHistories.put(game.getId(), new ArrayList<>());
-
         return game;
+
     }
 
     @Override
@@ -144,7 +156,14 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public String getGameName(Locale locale) {
-        return gamePlugin.getName(locale);
+    public String getGameName(String gameType, Locale locale) {
+        GamePlugin plugin = gamePlugins.get(gameType);
+        if (plugin == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Unsupported game type: " + gameType
+            );
+        }
+        return plugin.getName(locale);
     }
 }

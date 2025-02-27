@@ -1,12 +1,13 @@
-package fr.le_campus_numerique.square_games.Dao;
+package fr.le_campus_numerique.square_games.dao;
 
-import fr.le_campus_numerique.square_games.Entity.GameEntity;
-import fr.le_campus_numerique.square_games.Entity.GameTokenEntity;
-import fr.le_campus_numerique.square_games.Repository.GameEntityRepository;
+import fr.le_campus_numerique.square_games.entity.GameEntity;
+import fr.le_campus_numerique.square_games.entity.GameTokenEntity;
+import fr.le_campus_numerique.square_games.repository.GameEntityRepository;
 import fr.le_campus_numerique.square_games.engine.Game;
 import fr.le_campus_numerique.square_games.engine.Token;
 import fr.le_campus_numerique.square_games.engine.TokenPosition;
 import fr.le_campus_numerique.square_games.engine.InconsistentGameDefinitionException;
+import fr.le_campus_numerique.square_games.engine.taquin.TaquinGameFactory;
 import fr.le_campus_numerique.square_games.engine.tictactoe.TicTacToeGameFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,11 +22,15 @@ import java.util.stream.Stream;
 public class JpaGameDao implements GameDao {
     private final GameEntityRepository repository;
     private final TicTacToeGameFactory gameFactory;
+    private final TicTacToeGameFactory ticTacToeGameFactory;
+    private final TaquinGameFactory taquinGameFactory;
 
     @Autowired
-    public JpaGameDao(GameEntityRepository repository, TicTacToeGameFactory gameFactory) {
+    public JpaGameDao(GameEntityRepository repository, TicTacToeGameFactory gameFactory, TicTacToeGameFactory ticTacToeGameFactory, TaquinGameFactory taquinGameFactory) {
         this.repository = repository;
         this.gameFactory = gameFactory;
+        this.ticTacToeGameFactory = ticTacToeGameFactory;
+        this.taquinGameFactory = taquinGameFactory;
     }
 
     @Override
@@ -131,17 +136,33 @@ public class JpaGameDao implements GameDao {
                 }
             }
 
-            return gameFactory.createGameWithIds(
-                    UUID.fromString(entity.id),
-                    entity.boardSize,
-                    playerIds,
-                    boardTokens,
-                    removedTokens
-            );
+            if ("tictactoe".equals(entity.factoryId)) {
+                return ticTacToeGameFactory.createGameWithIds(
+                        UUID.fromString(entity.id),
+                        entity.boardSize,
+                        playerIds,
+                        boardTokens,
+                        removedTokens
+                );
+            } else if ("15 puzzle".equals(entity.factoryId)) {
+                return taquinGameFactory.createGameWithIds(
+                        UUID.fromString(entity.id),
+                        entity.boardSize,
+                        playerIds,
+                        boardTokens,
+                        removedTokens
+                );
+            } else {
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unsupported game type: " + entity.factoryId
+                );
+            }
         } catch (InconsistentGameDefinitionException e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Error loading game: " + e.getMessage()
+                    "Error loading game: " + e.getMessage(),
+                    e
             );
         }
     }

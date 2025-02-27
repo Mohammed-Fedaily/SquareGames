@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Service;
+package fr.le_campus_numerique.square_games.service;
 
 import java.util.Collection;
 

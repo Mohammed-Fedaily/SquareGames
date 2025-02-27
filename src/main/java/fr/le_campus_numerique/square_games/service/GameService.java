@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Service;
+package fr.le_campus_numerique.square_games.service;
 
 import fr.le_campus_numerique.square_games.engine.Game;
 import fr.le_campus_numerique.square_games.engine.CellPosition;
@@ -16,6 +16,6 @@ public interface GameService {
     Collection<Game> getAllGames();
     Collection<CellPosition> getAvailableMoves(UUID gameId, UUID playerId);
     List<String> getGameHistory(UUID gameId);
-    String getGameName(Locale locale);
+    String getGameName(String gameType, Locale locale);
 
 }

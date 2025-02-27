@@ -1,10 +1,10 @@
-package fr.le_campus_numerique.square_games.Controller;
+package fr.le_campus_numerique.square_games.controller;
 
-import fr.le_campus_numerique.square_games.Dto.GameDtoReq;
-import fr.le_campus_numerique.square_games.Dto.GameDtoRes;
+import fr.le_campus_numerique.square_games.dto.GameDtoReq;
+import fr.le_campus_numerique.square_games.dto.GameDtoRes;
 import fr.le_campus_numerique.square_games.engine.CellPosition;
 import fr.le_campus_numerique.square_games.engine.Game;
-import fr.le_campus_numerique.square_games.Service.GameService;
+import fr.le_campus_numerique.square_games.service.GameService;
 import fr.le_campus_numerique.square_games.engine.InvalidPositionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -46,9 +46,11 @@ public class GameController {
     }
 
     @GetMapping("/name")
-    public String getGameName(@RequestHeader(name = "Accept-Language", defaultValue = "en") String languageHeader) {
+    public String getGameName(
+            @RequestParam("type") String gameType,
+            @RequestHeader(name = "Accept-Language", defaultValue = "en") String languageHeader) {
         Locale locale = Locale.forLanguageTag(languageHeader);
-        return gameService.getGameName(locale);
+        return gameService.getGameName(gameType, locale);
     }
 
     @GetMapping("/{gameId}")

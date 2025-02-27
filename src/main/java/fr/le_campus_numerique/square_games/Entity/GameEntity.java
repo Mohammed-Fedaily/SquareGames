@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Entity;
+package fr.le_campus_numerique.square_games.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;

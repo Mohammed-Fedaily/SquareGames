@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Dto;
+package fr.le_campus_numerique.square_games.dto;
 
 import fr.le_campus_numerique.square_games.engine.CellPosition;
 import fr.le_campus_numerique.square_games.engine.Token;
