@@ -1,7 +1,7 @@
-package fr.le_campus_numerique.square_games.Repository;
+package fr.le_campus_numerique.square_games.repository;
 
 
-import fr.le_campus_numerique.square_games.Entity.GameEntity;
+import fr.le_campus_numerique.square_games.entity.GameEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

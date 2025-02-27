@@ -1,7 +1,7 @@
 package fr.le_campus_numerique.square_games.plugin;
 
 import fr.le_campus_numerique.square_games.engine.Game;
-import fr.le_campus_numerique.square_games.engine.tictactoe.TicTacToeGameFactory;
+import fr.le_campus_numerique.square_games.engine.taquin.TaquinGameFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -11,25 +11,25 @@ import java.util.Locale;
 import java.util.Optional;
 
 @Component
-public class TicTacToePlugin implements GamePlugin {
-    private final TicTacToeGameFactory gameFactory;
+public class TaquinPlugin implements GamePlugin {
+    private final TaquinGameFactory gameFactory;
     private final MessageSource messageSource;
 
-    @Value("${game.tictactoe.default-player-count:2}")
+    @Value("${game.taquin.default-player-count:1}")
     private int defaultPlayerCount;
 
-    @Value("${game.tictactoe.default-board-size:3}")
+    @Value("${game.taquin.default-board-size:4}")
     private int defaultBoardSize;
 
     @Autowired
-    public TicTacToePlugin(MessageSource messageSource) {
-        this.gameFactory = new TicTacToeGameFactory();
+    public TaquinPlugin(MessageSource messageSource) {
+        this.gameFactory = new TaquinGameFactory();
         this.messageSource = messageSource;
     }
 
     @Override
     public String getName(Locale locale) {
-        return messageSource.getMessage("game.tictactoe.name", null, locale);
+        return messageSource.getMessage("game.taquin.name", null, locale);
     }
 
     @Override

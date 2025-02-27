@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Plugin;
+package fr.le_campus_numerique.square_games.plugin;
 
 import fr.le_campus_numerique.square_games.engine.Game;
 

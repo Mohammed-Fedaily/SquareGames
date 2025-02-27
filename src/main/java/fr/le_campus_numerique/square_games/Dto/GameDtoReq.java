@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Dto;
+package fr.le_campus_numerique.square_games.dto;
 
 public class GameDtoReq {
     private String gameType;

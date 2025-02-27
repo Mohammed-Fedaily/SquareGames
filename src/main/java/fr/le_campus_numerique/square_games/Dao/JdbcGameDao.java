@@ -1,4 +1,4 @@
-package fr.le_campus_numerique.square_games.Dao;
+package fr.le_campus_numerique.square_games.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
